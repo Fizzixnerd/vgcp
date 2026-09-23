@@ -26,7 +26,7 @@ vgcp = ["dep:vgcp-server"]
 
 [dependencies]
 godot = { version = "=0.5.5", features = ["api-4-7"] }
-vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.1.0", optional = true }
+vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.2.0", optional = true }
 ```
 
 Then call `vgcp_server::on_stage_init(stage)` from your `ExtensionLibrary::on_stage_init` under

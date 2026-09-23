@@ -107,7 +107,7 @@ my-game/
 
    [dependencies]
    godot = { version = "=0.5.5", features = ["api-4-7"] }
-   vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.1.0", optional = true }
+   vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.2.0", optional = true }
    # or, from a local checkout:
    # vgcp-server = { path = "../../vgcp/vgcp-server", optional = true }
    ```
@@ -187,6 +187,9 @@ my-game/
    (`VGCP_ADDR=127.0.0.1:38787 godot --path godot`). On boot you should see
    `[VGCP] vgcp feature ON — VgcpServer attached to scene root`, then
    `[VGCP] VGCP Server v1.5.2 listening on 127.0.0.1:38787 (paused-by-default)`.
+   The first import can end with `Aborted (core dumped)` (exit status 134) after it has done its
+   work: check that `godot/.godot/extension_list.cfg` names your `.gdextension`, and import again
+   for a clean exit.
 
 5. **The crate's own checks** run in this directory: `cargo clippy --all-targets -- -D warnings`
    and `cargo test`. A game's clippy run does not lint this crate.
@@ -466,10 +469,13 @@ and dropping an unused `Image` import. Every other API call matched the source a
 
 ## 5. Headless caveat (screenshots)
 
-`--headless` uses the dummy renderer, so captures come back **blank**. Run the game **windowed** on
-a real display, or on a **virtual display** such as Xvfb with a software Vulkan driver (Mesa
-lavapipe). A hardware Vulkan driver generally cannot present to Xvfb, so a virtual display needs
-the software driver.
+`--headless` uses the dummy renderer, which draws no frame, so `screenshot` **fails** with
+`capture_failed` ("could not read viewport image"). Run the game **windowed** on a real display,
+or on a **virtual display** such as Xvfb with a software Vulkan driver (Mesa lavapipe). A hardware
+Vulkan driver generally cannot present to Xvfb, so a virtual display needs the software driver.
+[`../virtual-display/launch_game.sh`](../virtual-display/launch_game.sh) sets all of this up and
+launches the game; [`../docs/virtual-display.md`](../docs/virtual-display.md) lists the packages to
+install and how to troubleshoot.
 
 ---
 
@@ -483,7 +489,7 @@ GAME=path/to/my-game
 
 # 1. Build, import once, and run the game windowed (on a real or virtual display).
 ( cd "$GAME/rust" && cargo build --features vgcp )
-godot --headless --path "$GAME/godot" --import
+godot --headless --path "$GAME/godot" --import    # a first import may abort after its work (§1, step 4)
 VGCP_ADDR=127.0.0.1:38787 godot --path "$GAME/godot" &
 
 # 2. Wait for the server to listen: control.py connects once and does not retry.

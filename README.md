@@ -7,7 +7,9 @@ drawn frame, sends input and queries the game's state. Nothing moves while the c
 
 The protocol is newline-delimited JSON over a loopback TCP socket. This repository holds the
 protocol document, a server for Godot 4 games written in Rust with gdext, and client drivers in
-Python and TypeScript. It is v0.1; the protocol itself is at version **1.5.2**.
+Python and TypeScript, a test system that records a test once and replays it with no agent, and
+helpers for taking real screenshots on a machine with no display. It is v0.2; the protocol itself
+is at version **1.5.2**.
 
 ## Why
 
@@ -33,22 +35,23 @@ frame the agent sees is not the frame it acts on. VGCP removes the race:
   test or script ----------------> control.py (vgcp-mcp) --+   127.0.0.1:38787 (vgcp-server)
 ```
 
-## What is in v0.1
+## What is in v0.2
 
 | Path | What |
 |---|---|
 | [`docs/vgcp-protocol.md`](docs/vgcp-protocol.md) | the protocol, version 1.5.2: every command, field and error code. It is the single source of truth; every implementation here conforms to it. |
 | [`vgcp-server/`](vgcp-server/) | the `vgcp-server` crate: the in-game server, one `VgcpServer` node, for Godot 4.7 or newer and gdext (the `godot` crate) 0.5.5 |
 | [`vgcp-mcp/`](vgcp-mcp/) | the drivers: `control.py`, a Python CLI and library that needs only the standard library; `mock_server.py`, a VGCP server with no game engine, for trying and testing clients; and an MCP server in TypeScript that exposes each command as a `game_*` tool and advertises itself as `vgcp-godot` |
-
-A test harness that replays recorded VGCP scripts, and helpers for taking screenshots on a
-machine with no display, follow in a later release.
+| [`vgcp-test/`](vgcp-test/) | the test system, in Python with only the standard library: record a test by playing it once through a `Recorder`, replay every recorded script against a freshly launched game with no agent, and get a triage packet for each failure |
+| [`virtual-display/`](virtual-display/) | shell scripts that launch a game windowed on a private Xvfb display with software Vulkan, so screenshots are real frames on a machine with no monitor or GPU |
+| [`docs/virtual-display.md`](docs/virtual-display.md) | how to install, use and troubleshoot that display |
 
 ## Quick start, with no Godot
 
-You need `python3`; `node` 22 or newer adds the MCP server to the self-test.
+You need `python3` and `git`; `node` 22 or newer adds the MCP server to the self-test.
 
 ```bash
+python3 vgcp-test/selftest.py         # the test system against the mock; ends with ALL PASS
 cd vgcp-mcp
 bash selftest.sh                      # both drivers against the mock; ends with OVERALL: ALL PASS
 ```
@@ -84,7 +87,7 @@ Rust 1.94 or newer (edition 2024).
 
    [dependencies]
    godot = { version = "=0.5.5", features = ["api-4-7"] }
-   vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.1.0", optional = true }
+   vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.2.0", optional = true }
    ```
 
 2. Spawn the server from your extension's entry point:
@@ -120,9 +123,10 @@ cargo tree --features vgcp -i godot-core     # must print exactly one godot-core
 dependency and the one-`godot-core` rules (§1), state providers in Rust and GDScript (§2), the
 action sink and seed target (§2a), and a smoke test (§6).
 
-**Screenshots need a rendering display.** Godot's `--headless` mode uses a dummy renderer, so
-screenshots come back blank. Run the game windowed on a real display, or on a virtual one such as
-Xvfb with a software Vulkan driver (for example Mesa's lavapipe).
+**Screenshots need a rendering display.** Godot's `--headless` mode uses a dummy renderer, which
+draws no frame, so `screenshot` fails there with `capture_failed` ("could not read viewport image").
+Run the game windowed on a real display, or on a virtual one
+([Screenshots with no display](#screenshots-with-no-display), below).
 
 **Keep it out of release builds.** The port is loopback only and unauthenticated: it is a debug
 facility. Never expose it off `localhost`, and build releases without the `vgcp` feature.
@@ -154,13 +158,53 @@ The server offers 17 tools, one per command (`game_ping`, `game_step`, `game_scr
 `game_input`, `game_get_state`, ...). `dist/` is build output: rebuild after every update and
 restart the client so it reloads the tools.
 
+## Test a game
+
+`vgcp-test/` turns VGCP into a regression suite. Play a test once through a `Recorder` and it is
+saved as a VGCP script: a linear list of commands whose expected replies were captured from the
+game, synced on signals and state rather than on timing. `harness.py` then replays every script in
+the game's `tests/vgcp/` against a freshly launched game, with no agent, and prints a triage packet
+for each failure. Each script records the commit it was made against. A game describes itself, if
+it needs to, in an optional `vgcp.json`: its directory, the environment variables that set up a
+scenario, a boot mode. [`vgcp-test/README.md`](vgcp-test/README.md) has the details.
+
+```bash
+cd path/to/my-game                              # a git checkout of the game
+python3 path/to/vgcp/vgcp-test/harness.py --list
+python3 path/to/vgcp/vgcp-test/harness.py       # replay every script; exit 0 when all pass
+```
+
+## Screenshots with no display
+
+`virtual-display/launch_game.sh` runs a game windowed on a private Xvfb display with Mesa's
+software Vulkan driver (lavapipe), so captures are real frames on a machine with no monitor or
+GPU, and no window appears on anyone's desktop. It starts the display if it is not already
+running, refuses a VGCP port that another process holds, waits for the server, and prints the
+game's pid on standard output and a `kill` line to stop it on standard error. Set
+`VGCP_DISPLAY=:0` to render on a real display instead.
+[`docs/virtual-display.md`](docs/virtual-display.md) lists the packages to install and how to
+troubleshoot.
+
+```bash
+cd path/to/my-game                              # holds project.godot, or godot/project.godot
+bash path/to/vgcp/virtual-display/launch_game.sh --port 38787
+python3 path/to/vgcp/vgcp-mcp/control.py screenshot    # prints the PNG's path
+```
+
 ## Environment variables
 
 | Variable | Read by | Meaning |
 |---|---|---|
 | `VGCP_ADDR` | server | the address to bind, for example `127.0.0.1:38787` |
-| `VGCP_HOST`, `VGCP_PORT` | drivers, mock | where to connect or listen; default `127.0.0.1` and `38787` |
+| `VGCP_HOST`, `VGCP_PORT` | drivers, mock, launcher | where to connect or listen; default `127.0.0.1` and `38787` |
 | `VGCP_SHOTS_DIR` | server | where a `screenshot` with no `path` is written; default `<temp>/vgcp_tmp`, so `TMPDIR` moves it. A `path` the client sends is used as given. |
+| `VGCP_GAME_DIR` | test harness | the game directory, relative to the repository root; overrides `vgcp.json`'s `game_dir` |
+| `VGCP_GODOT_PROJECT` | launcher | the Godot project to boot; default the current directory when it holds `project.godot`, else its `godot/`. The harness sets it to the game's project. |
+| `GODOT4_BIN` | launcher | the Godot binary, a path or a command name; default `godot4` on `PATH`, then `~/.local/bin/godot4`, then `godot` |
+| `VGCP_DISPLAY` | launcher | set (for example `:0`) to render on that real display with its GPU, where the window is visible; unset, the game runs on the private Xvfb display |
+| `VGCP_XVFB_DISPLAY` | launcher | the private Xvfb display; default `:99` (`--display` sets it) |
+| `VGCP_SOFTWARE` | launcher | `1` forces software Vulkan (lavapipe); the private display defaults it to `1`, since a hardware Vulkan driver cannot present to Xvfb |
+| `VGCP_DRIVER_FLAGS` | set by `gfx-env.sh` | the extra Godot flags `run-game.sh` passes: `--display-driver x11 --audio-driver Dummy` on the private display, none on a real one |
 
 ## The protocol
 

@@ -25,7 +25,7 @@
 //!
 //!    ```toml
 //!    [dependencies]
-//!    vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.1.0", optional = true }
+//!    vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.2.0", optional = true }
 //!    # or: vgcp-server = { path = "…/vgcp-server", optional = true }
 //!
 //!    [features]

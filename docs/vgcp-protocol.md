@@ -265,9 +265,10 @@ return an error envelope (§2.3).
   ```json
   {"ok": true, "path": "/tmp/vgcp_tmp/shot-7.png", "w": 960, "h": 540}
   ```
-- Errors: `capture_failed` (no viewport texture, or a save error). **Headless caveat:** under
-  `--headless` the capture is **blank**. Run windowed on a real or virtual display (for example
-  Xvfb with a software Vulkan driver).
+- Errors: `capture_failed` (no viewport texture, no image to read from it, or a save error).
+  **Headless caveat:** under `--headless` Godot's dummy renderer draws no frame, so every capture
+  fails with `capture_failed` ("could not read viewport image"). Run windowed on a real or virtual
+  display (for example Xvfb with a software Vulkan driver).
 
 ### 4.6 `input`: inject input (one event per message)
 `args.type` selects the form. Inject **while paused**, then `step` to let the game react.
@@ -815,7 +816,7 @@ their reply; see §4.11.
 | `unknown_provider` | `get_state.provider` not registered |
 | `no_action_sink` | an `input` of type `game_action` arrived but the game registered no action sink (§4.6.3) |
 | `no_seed_target` | a `seed` command arrived but the game registered no seed target (§4.6.3) |
-| `capture_failed` | screenshot could not capture or save (no viewport texture, save error, headless blank) |
+| `capture_failed` | screenshot could not capture or save (no viewport texture, no viewport image as under `--headless`, save error) |
 | `protocol_mismatch` | client `min_protocol_major` cannot be satisfied |
 | `internal` | unexpected server-side error (message has detail) |
 
