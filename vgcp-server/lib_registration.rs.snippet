@@ -1,0 +1,42 @@
+// ── Consumer snippet: wiring a gdext game to the `vgcp_server` crate ──────────────────────────
+// This is NOT a standalone file. It shows the two edits a game makes to use the server, which is
+// this directory's crate (package `vgcp-server`, lib `vgcp_server`). The game does not copy any
+// server source into its own src/. See INTEGRATION.md for the full steps.
+
+// 1) The game's Cargo.toml: an OPTIONAL dependency, turned on by the game's `vgcp` feature, so a
+//    build without the feature neither compiles nor links the control plane. The game must use
+//    the SAME `godot` version and API feature as this crate (godot "=0.5.5", api-4-7): gdext
+//    registers every class in one godot-core registry, and a second copy would be a second
+//    registry in which VgcpServer never registers.
+//
+//    [features]
+//    vgcp = ["dep:vgcp-server"]
+//
+//    [dependencies]
+//    godot = { version = "=0.5.5", features = ["api-4-7"] }
+//    # Either a git dependency on a release tag (Cargo finds the package inside the repository):
+//    vgcp-server = { git = "https://github.com/Fizzixnerd/vgcp", tag = "v0.1.0", optional = true }
+//    # or a path dependency on a local checkout:
+//    # vgcp-server = { path = "<relative path to>/vgcp-server", optional = true }
+
+// 2) The game's lib.rs: call the crate's spawn from the extension's own `on_stage_init`, under the
+//    feature. No `mod` line and no autoload are needed.
+use godot::prelude::*;
+
+struct MyGame;
+
+#[gdextension]
+unsafe impl ExtensionLibrary for MyGame {
+    // Spawning here, not from an `[autoload]` entry, keeps a featureless project unmodified: it
+    // boots with no debug port, and without the feature this method is not compiled at all. The
+    // call is also what links the crate: gdext registers a dependency's classes only if the
+    // cdylib names the crate.
+    #[cfg(feature = "vgcp")]
+    fn on_stage_init(stage: godot::init::InitStage) {
+        // At InitStage::MainLoop, and never under the editor (which is also what runs a headless
+        // --import and --export-*), this attaches a VgcpServer named vgcp_server::NODE_NAME to
+        // the root window, reachable at vgcp_server::NODE_PATH ("/root/VgcpServer"), and returns
+        // it; at any other stage, or on failure, it returns None.
+        vgcp_server::on_stage_init(stage);
+    }
+}

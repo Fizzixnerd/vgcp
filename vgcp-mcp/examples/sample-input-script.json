@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "resolution": [1280, 720],
+  "scale": false,
+  "frames": [
+    { "frame": 0, "events": [
+        { "type": "mouse_move", "x": 640, "y": 360 }
+    ] },
+    { "frame": 3, "events": [
+        { "type": "mouse_button", "x": 200, "y": 300, "button": 1, "pressed": true },
+        { "type": "mouse_button", "x": 200, "y": 300, "button": 1, "pressed": false }
+    ] },
+    { "frame": 10, "events": [
+        { "type": "key", "keycode": 32, "pressed": true },
+        { "type": "key", "keycode": 32, "pressed": false }
+    ] },
+    { "frame": 14, "events": [
+        { "type": "action", "action": "jump", "pressed": true },
+        { "type": "action", "action": "jump", "pressed": false }
+    ] }
+  ]
+}

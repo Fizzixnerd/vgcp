@@ -1,0 +1,4 @@
+vgcp-mcp/dist/
+node_modules/
+vgcp-server/target/
+__pycache__/

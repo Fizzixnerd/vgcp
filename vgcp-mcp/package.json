@@ -1,0 +1,44 @@
+{
+  "name": "vgcp-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server for VGCP, the Video Game Control Protocol: lets an MCP client pause, step, screenshot, send input to and query the state of a running Godot game.",
+  "keywords": [
+    "vgcp",
+    "video-game-control-protocol",
+    "mcp",
+    "godot",
+    "game-testing"
+  ],
+  "type": "module",
+  "bin": {
+    "vgcp-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "selftest": "node test/mcp_selftest.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^7.0.2"
+  },
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Fizzixnerd/vgcp.git",
+    "directory": "vgcp-mcp"
+  }
+}

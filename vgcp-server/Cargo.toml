@@ -1,0 +1,20 @@
+[package]
+name = "vgcp-server"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+description = "In-game server for VGCP, the Video Game Control Protocol, for Godot 4 games written in Rust with gdext"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Fizzixnerd/vgcp"
+
+[lib]
+name = "vgcp_server"
+path = "src/lib.rs"
+
+[dependencies]
+# Pinned exactly. The consuming game must use the same godot version and API feature
+# (godot "=0.5.5", api-4-7), so that it and this crate share ONE godot-core: gdext registers every
+# class in that crate's single registry. Two copies would be two registries, and VgcpServer would
+# silently never register.
+godot = { version = "=0.5.5", features = ["api-4-7"] }

@@ -1,0 +1,25 @@
+; Autoload scene for the VGCP Server (Video Game Control Protocol).
+;
+; SUPERSEDED and not maintained: the supported wiring is `vgcp_server::on_stage_init`
+; (see INTEGRATION.md). Use this scene only instead of that call, never with it: two
+; servers would contend for the same port, and the second one quits the game.
+;
+; The root node's `type` is the custom class registered by the gdext extension
+; (`VgcpServer`). Because GDExtension classes are registered before autoloads
+; load, Godot resolves this type at scene-load time, with no GDScript involved.
+;
+; Install: copy this file to `autoload/vgcp_server.tscn` in your Godot project, then
+; add to that project's `project.godot`:
+;
+;   [autoload]
+;   VgcpServer="*res://autoload/vgcp_server.tscn"
+;
+; The leading "*" makes it a singleton autoload available in every scene.
+;
+; No `uid="..."` is hand-written here: a fake base31 string would make Godot warn and
+; reassign a fresh UID on first import anyway. Godot generates a real one when it saves
+; this scene (a `.tscn.uid` sidecar / inline uid). Autoloads resolve by path regardless.
+
+[gd_scene format=3]
+
+[node name="VgcpServer" type="VgcpServer"]

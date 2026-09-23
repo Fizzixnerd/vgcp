@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "resolution": [1280, 720],
+  "scale": false,
+  "frames": [
+    { "frame": 0, "events": [
+        { "type": "game_action", "action": "move_to", "payload": { "x": 300 } }
+    ] },
+    { "frame": 5, "events": [
+        { "type": "game_action", "action": "pause" }
+    ] }
+  ]
+}

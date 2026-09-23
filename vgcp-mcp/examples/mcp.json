@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vgcp-godot": {
+      "command": "node",
+      "args": ["vgcp-mcp/dist/index.js"],
+      "env": { "VGCP_HOST": "127.0.0.1", "VGCP_PORT": "38787" }
+    }
+  }
+}
